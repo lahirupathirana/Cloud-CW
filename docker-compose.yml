@@ -1,0 +1,141 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: ts-postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: techsalary
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    networks:
+      - ts-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d techsalary"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  identity-service:
+    build:
+      context: ./backend/identity-service
+    container_name: ts-identity
+    environment:
+      - PORT=3001
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=admin
+      - DB_PASSWORD=password
+      - DB_NAME=techsalary
+      - JWT_SECRET=supersecretjwt
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ts-network
+
+  salary-service:
+    build:
+      context: ./backend/salary-submission-service
+    container_name: ts-salary
+    environment:
+      - PORT=3002
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=admin
+      - DB_PASSWORD=password
+      - DB_NAME=techsalary
+    ports:
+      - "3002:3002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ts-network
+
+  vote-service:
+    build:
+      context: ./backend/vote-service
+    container_name: ts-vote
+    environment:
+      - PORT=3003
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=admin
+      - DB_PASSWORD=password
+      - DB_NAME=techsalary
+      - JWT_SECRET=supersecretjwt
+    ports:
+      - "3003:3003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ts-network
+
+  search-service:
+    build:
+      context: ./backend/search-stats-service
+    container_name: ts-search
+    environment:
+      - PORT=3004
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=admin
+      - DB_PASSWORD=password
+      - DB_NAME=techsalary
+    ports:
+      - "3004:3004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ts-network
+
+  bff-service:
+    build:
+      context: ./backend/bff-service
+    container_name: ts-bff
+    environment:
+      - PORT=3000
+      - IDENTITY_URL=http://identity-service:3001
+      - SALARY_URL=http://salary-service:3002
+      - VOTE_URL=http://vote-service:3003
+      - SEARCH_URL=http://search-service:3004
+      - JWT_SECRET=supersecretjwt
+    ports:
+      - "3050:3000"
+    depends_on:
+      - identity-service
+      - salary-service
+      - vote-service
+      - search-service
+    networks:
+      - ts-network
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: ts-frontend
+    environment:
+      - NEXT_PUBLIC_BFF_URL=http://localhost:3050
+    ports:
+      - "3000:3000"
+    depends_on:
+      - bff-service
+    networks:
+      - ts-network
+
+volumes:
+  pgdata:
+
+networks:
+  ts-network:
+    driver: bridge
