@@ -1,19 +1,21 @@
 {
   "name": "search-stats-service",
   "version": "1.0.0",
-  "description": "Search and Stats microservice",
+  "description": "Search and Stats using Prisma",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "build": "prisma generate"
   },
   "dependencies": {
+    "@prisma/client": "^5.6.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "pg": "^8.11.3"
+    "express": "^4.18.2"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "prisma": "^5.6.0"
   }
 }

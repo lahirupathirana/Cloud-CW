@@ -1,67 +1,68 @@
 const express = require('express');
-const { Pool } = require('pg');
+const { PrismaClient } = require('@prisma/client');
 const dotenv = require('dotenv');
 const cors = require('cors');
 
 dotenv.config();
 
+const prisma = new PrismaClient();
 const app = express();
 app.use(express.json());
 app.use(cors());
 
 app.get('/health/live', (req, res) => res.status(200).send('Alive'));
-app.get('/health/ready', (req, res) => res.status(200).send('Ready'));
-
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+app.get('/health/ready', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.status(200).send('Ready');
+  } catch (e) {
+    res.status(500).send('Not Ready');
+  }
 });
 
-// Search API (Read-optimized view of APPROVED salaries)
 app.get('/api/search', async (req, res) => {
-  const { keyword, minSalary, maxSalary, yearsExperience } = req.query;
+  const { keyword, minSalary } = req.query;
   
-  let query = "SELECT * FROM salary.submissions WHERE status = 'APPROVED'";
-  let queryParams = [];
-  let paramIndex = 1;
-
+  const whereClause = { status: 'APPROVED' };
+  
   if (keyword) {
-    query += ` AND job_title ILIKE $${paramIndex}`;
-    queryParams.push(`%${keyword}%`);
-    paramIndex++;
+    whereClause.jobTitle = { contains: keyword, mode: 'insensitive' };
   }
-
   if (minSalary) {
-    query += ` AND base_salary >= $${paramIndex}`;
-    queryParams.push(minSalary);
-    paramIndex++;
+    whereClause.baseSalary = { gte: parseFloat(minSalary) };
   }
 
   try {
-    const result = await pool.query(query, queryParams);
-    res.json(result.rows);
+    const results = await prisma.submission.findMany({
+      where: whereClause,
+      orderBy: { createdAt: 'desc' },
+      // Note: Do not return exact company_name to strictly preserve anonymity in UI if required, 
+      // though anonymize toggle strips it at submission as well.
+    });
+    res.json(results);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
-// Stats API
 app.get('/api/stats', async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT 
-        job_title, 
-        AVG(base_salary) as average_salary, 
-        COUNT(*) as total_submissions 
-      FROM salary.submissions 
-      WHERE status = 'APPROVED' 
-      GROUP BY job_title
-    `);
-    res.json(result.rows);
+    const aggregate = await prisma.submission.groupBy({
+      by: ['jobTitle'],
+      where: { status: 'APPROVED' },
+      _avg: { baseSalary: true, yearsOfExperience: true },
+      _count: { id: true }
+    });
+
+    const results = aggregate.map(stat => ({
+      job_title: stat.jobTitle,
+      average_salary: stat._avg.baseSalary,
+      average_experience: stat._avg.yearsOfExperience,
+      total_submissions: stat._count.id
+    }));
+
+    res.json(results);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal Server Error' });

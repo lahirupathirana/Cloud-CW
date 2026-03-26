@@ -1,58 +1,60 @@
 const express = require('express');
-const { Pool } = require('pg');
+const { PrismaClient } = require('@prisma/client');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const axios = require('axios');
 
 dotenv.config();
 
+const prisma = new PrismaClient();
 const app = express();
 app.use(express.json());
 app.use(cors());
 
 app.get('/health/live', (req, res) => res.status(200).send('Alive'));
-app.get('/health/ready', (req, res) => res.status(200).send('Ready'));
-
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+app.get('/health/ready', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.status(200).send('Ready');
+  } catch (e) {
+    res.status(500).send('Not Ready');
+  }
 });
 
-// Assume 5 upvotes makes it APPROVED
-const APPROVAL_THRESHOLD = 5;
+const APPROVAL_THRESHOLD = 3;
 const SALARY_SERVICE_URL = process.env.SALARY_SERVICE_URL || 'http://salary-service:3002';
 
 app.post('/api/votes', async (req, res) => {
-  // Authentication check is done in BFF, bff passes user_id in headers
-  const userId = req.headers['x-user-id'];
+  const userId = req.headers['x-user-id']; // Proxied from BFF
   const { submission_id, vote_type } = req.body;
 
   if (!userId) return res.status(401).json({ error: 'Unauthorized' });
   if (!['UP', 'DOWN'].includes(vote_type)) return res.status(400).json({ error: 'Invalid vote type' });
 
-  const client = await pool.connect();
   try {
-    await client.query('BEGIN');
-    
-    // Insert/Update vote
-    await client.query(
-      `INSERT INTO community.votes (submission_id, user_id, vote_type) 
-       VALUES ($1, $2, $3) 
-       ON CONFLICT (submission_id, user_id) 
-       DO UPDATE SET vote_type = EXCLUDED.vote_type`,
-      [submission_id, userId, vote_type]
-    );
+    // Insert or update vote
+    await prisma.vote.upsert({
+      where: {
+        submissionId_userId: {
+          submissionId: parseInt(submission_id),
+          userId: parseInt(userId)
+        }
+      },
+      update: { voteType: vote_type },
+      create: {
+        submissionId: parseInt(submission_id),
+        userId: parseInt(userId),
+        voteType: vote_type
+      }
+    });
 
     // Count UP votes
-    const countResult = await client.query(
-      "SELECT COUNT(*) as upvotes FROM community.votes WHERE submission_id = $1 AND vote_type = 'UP'",
-      [submission_id]
-    );
-
-    const upvotes = parseInt(countResult.rows[0].upvotes, 10);
+    const upvotes = await prisma.vote.count({
+      where: {
+        submissionId: parseInt(submission_id),
+        voteType: 'UP'
+      }
+    });
 
     if (upvotes >= APPROVAL_THRESHOLD) {
       // Notify Salary Service to approve
@@ -63,14 +65,10 @@ app.post('/api/votes', async (req, res) => {
       }
     }
 
-    await client.query('COMMIT');
     res.json({ success: true, upvotes });
   } catch (err) {
-    await client.query('ROLLBACK');
     console.error(err);
     res.status(500).json({ error: 'Internal Server Error' });
-  } finally {
-    client.release();
   }
 });
 

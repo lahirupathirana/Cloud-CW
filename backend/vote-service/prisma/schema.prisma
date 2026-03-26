@@ -1,0 +1,22 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["community"]
+}
+
+model Vote {
+  id           Int      @id @default(autoincrement())
+  submissionId Int      @map("submission_id")
+  userId       Int      @map("user_id")
+  voteType     String   @map("vote_type") // UP or DOWN
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@unique([submissionId, userId])
+  @@map("votes")
+  @@schema("community")
+}

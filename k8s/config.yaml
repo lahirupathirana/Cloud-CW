@@ -6,13 +6,11 @@ metadata:
   namespace: app
 data:
   PORT: "3000"
-  DB_HOST: "postgres.data.svc.cluster.local"
-  DB_PORT: "5432"
-  DB_NAME: "techsalary"
-  IDENTITY_URL: "http://identity-service:3001"
-  SALARY_URL: "http://salary-service:3002"
-  VOTE_URL: "http://vote-service:3003"
-  SEARCH_URL: "http://search-service:3004"
+  IDENTITY_URL: "http://identity-service.app.svc.cluster.local:3001"
+  SALARY_URL: "http://salary-service.app.svc.cluster.local:3002"
+  VOTE_URL: "http://vote-service.app.svc.cluster.local:3003"
+  SEARCH_URL: "http://search-service.app.svc.cluster.local:3004"
+  SALARY_SERVICE_URL: "http://salary-service.app.svc.cluster.local:3002"
   NEXT_PUBLIC_BFF_URL: "/api/proxy"
 ---
 apiVersion: v1
@@ -22,8 +20,8 @@ metadata:
   namespace: app
 type: Opaque
 data:
-  # Echo "supersecretjwt" | base64 -> c3VwZXJzZWNyZXRqd3QK (roughly) using exact echo -n "supersecretjwt" | base64 -> c3VwZXJzZWNyZXRqd3Q=
-  JWT_SECRET: "c3VwZXJzZWNyZXRqd3Q="
+  # Echo "supersecretjwt" | base64 -> c3VwZXJzZWNyZXRqd3QK
+  JWT_SECRET: "c3VwZXJzZWNyZXRqd3Q=" # Note: use -n flag for echo -> c3VwZXJzZWNyZXRqd3Q=
 ---
 apiVersion: v1
 kind: Secret

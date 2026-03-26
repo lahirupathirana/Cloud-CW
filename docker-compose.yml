@@ -27,11 +27,7 @@ services:
     container_name: ts-identity
     environment:
       - PORT=3001
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=admin
-      - DB_PASSWORD=password
-      - DB_NAME=techsalary
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/techsalary?schema=identity
       - JWT_SECRET=supersecretjwt
     ports:
       - "3001:3001"
@@ -47,11 +43,7 @@ services:
     container_name: ts-salary
     environment:
       - PORT=3002
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=admin
-      - DB_PASSWORD=password
-      - DB_NAME=techsalary
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/techsalary?schema=salary
     ports:
       - "3002:3002"
     depends_on:
@@ -66,11 +58,8 @@ services:
     container_name: ts-vote
     environment:
       - PORT=3003
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=admin
-      - DB_PASSWORD=password
-      - DB_NAME=techsalary
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/techsalary?schema=community
+      - SALARY_SERVICE_URL=http://salary-service:3002
       - JWT_SECRET=supersecretjwt
     ports:
       - "3003:3003"
@@ -86,11 +75,7 @@ services:
     container_name: ts-search
     environment:
       - PORT=3004
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_USER=admin
-      - DB_PASSWORD=password
-      - DB_NAME=techsalary
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/techsalary?schema=salary
     ports:
       - "3004:3004"
     depends_on:

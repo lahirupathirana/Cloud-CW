@@ -1,5 +1,5 @@
 const express = require('express');
-const { Pool } = require('pg');
+const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
@@ -7,20 +7,19 @@ const cors = require('cors');
 
 dotenv.config();
 
+const prisma = new PrismaClient();
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Readiness and Liveness probe paths
 app.get('/health/live', (req, res) => res.status(200).send('Alive'));
-app.get('/health/ready', (req, res) => res.status(200).send('Ready'));
-
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+app.get('/health/ready', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.status(200).send('Ready');
+  } catch (e) {
+    res.status(500).send('Not Ready');
+  }
 });
 
 app.post('/auth/signup', async (req, res) => {
@@ -28,13 +27,19 @@ app.post('/auth/signup', async (req, res) => {
   try {
     const salt = await bcrypt.genSalt(10);
     const hash = await bcrypt.hash(password, salt);
-    const result = await pool.query(
-      'INSERT INTO identity.users (email, password_hash) VALUES ($1, $2) RETURNING id, email',
-      [email, hash]
-    );
-    res.status(201).json({ user: result.rows[0] });
+    
+    const user = await prisma.user.create({
+      data: {
+        email,
+        passwordHash: hash
+      },
+      select: { id: true, email: true }
+    });
+    
+    res.status(201).json({ user });
   } catch (error) {
     console.error(error);
+    if (error.code === 'P2002') return res.status(400).json({ error: 'Email already exists' });
     res.status(500).json({ error: 'User creation failed' });
   }
 });
@@ -42,14 +47,13 @@ app.post('/auth/signup', async (req, res) => {
 app.post('/auth/login', async (req, res) => {
   const { email, password } = req.body;
   try {
-    const result = await pool.query('SELECT * FROM identity.users WHERE email = $1', [email]);
-    if (result.rows.length === 0) return res.status(401).json({ error: 'Invalid credentials' });
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const user = result.rows[0];
-    const isMatch = await bcrypt.compare(password, user.password_hash);
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
 
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'supersecretjwt', { expiresIn: '1h' });
     res.json({ token });
   } catch (error) {
     console.error(error);

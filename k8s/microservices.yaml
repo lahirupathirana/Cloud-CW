@@ -26,19 +26,30 @@ spec:
                 name: backend-config
             - secretRef:
                 name: backend-secret
-            - secretRef:
-                name: db-secret
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_PASSWORD
+            - name: DATABASE_URL
+              value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres.data.svc.cluster.local:5432/techsalary?schema=identity"
           livenessProbe:
             httpGet:
               path: /health/live
               port: 3001
-            initialDelaySeconds: 5
+            initialDelaySeconds: 15
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /health/ready
               port: 3001
-            initialDelaySeconds: 5
+            initialDelaySeconds: 15
             periodSeconds: 10
 ---
 apiVersion: v1
@@ -81,19 +92,30 @@ spec:
           envFrom:
             - configMapRef:
                 name: backend-config
-            - secretRef:
-                name: db-secret
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_PASSWORD
+            - name: DATABASE_URL
+              value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres.data.svc.cluster.local:5432/techsalary?schema=salary"
           livenessProbe:
             httpGet:
               path: /health/live
               port: 3002
-            initialDelaySeconds: 5
+            initialDelaySeconds: 15
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /health/ready
               port: 3002
-            initialDelaySeconds: 5
+            initialDelaySeconds: 15
             periodSeconds: 10
 ---
 apiVersion: v1
@@ -137,20 +159,31 @@ spec:
             - configMapRef:
                 name: backend-config
             - secretRef:
-                name: db-secret
-            - secretRef:
                 name: backend-secret
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_PASSWORD
+            - name: DATABASE_URL
+              value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres.data.svc.cluster.local:5432/techsalary?schema=community"
           livenessProbe:
             httpGet:
               path: /health/live
               port: 3003
-            initialDelaySeconds: 5
+            initialDelaySeconds: 15
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /health/ready
               port: 3003
-            initialDelaySeconds: 5
+            initialDelaySeconds: 15
             periodSeconds: 10
 ---
 apiVersion: v1
@@ -193,19 +226,30 @@ spec:
           envFrom:
             - configMapRef:
                 name: backend-config
-            - secretRef:
-                name: db-secret
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: POSTGRES_PASSWORD
+            - name: DATABASE_URL
+              value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres.data.svc.cluster.local:5432/techsalary?schema=salary"
           livenessProbe:
             httpGet:
               path: /health/live
               port: 3004
-            initialDelaySeconds: 5
+            initialDelaySeconds: 15
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /health/ready
               port: 3004
-            initialDelaySeconds: 5
+            initialDelaySeconds: 15
             periodSeconds: 10
 ---
 apiVersion: v1
@@ -254,13 +298,13 @@ spec:
             httpGet:
               path: /health/live
               port: 3000
-            initialDelaySeconds: 5
+            initialDelaySeconds: 15
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /health/ready
               port: 3000
-            initialDelaySeconds: 5
+            initialDelaySeconds: 15
             periodSeconds: 10
 ---
 apiVersion: v1
