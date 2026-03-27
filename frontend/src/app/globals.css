@@ -54,5 +54,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    background-image: radial-gradient(circle at 15% 50%, rgba(var(--primary), 0.05), transparent 25%), radial-gradient(circle at 85% 30%, rgba(var(--primary), 0.08), transparent 25%);
+    background-attachment: fixed;
   }
 }

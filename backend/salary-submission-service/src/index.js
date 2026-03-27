@@ -34,6 +34,7 @@ app.post('/api/submissions', async (req, res) => {
     if (error) return res.status(400).json({ error: error.details[0].message });
 
     const { job_title, company_name, years_of_experience, base_salary } = value;
+    const userId = req.headers['x-user-id'];
     
     const submission = await prisma.submission.create({
       data: {
@@ -41,11 +42,39 @@ app.post('/api/submissions', async (req, res) => {
         companyName: company_name,
         yearsOfExperience: years_of_experience,
         baseSalary: base_salary,
-        status: 'PENDING'
+        status: 'PENDING',
+        userId: userId ? parseInt(userId) : null
       }
     });
     
     res.status(201).json(submission);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.get('/api/submissions', async (req, res) => {
+  try {
+    const submissions = await prisma.submission.findMany({
+      where: { status: 'PENDING' },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(submissions);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.get('/internal/submissions/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const submission = await prisma.submission.findUnique({
+      where: { id: parseInt(id) }
+    });
+    if (!submission) return res.status(404).json({ error: 'Not found' });
+    res.json(submission);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal Server Error' });

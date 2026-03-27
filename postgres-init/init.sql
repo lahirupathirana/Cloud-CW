@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS salary.submissions (
   years_of_experience INTEGER NOT NULL,
   base_salary DOUBLE PRECISION NOT NULL,
   status TEXT DEFAULT 'PENDING',
+  user_id INTEGER,
   created_at TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP
 );
 

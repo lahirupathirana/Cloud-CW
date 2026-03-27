@@ -1,7 +1,7 @@
 {
-  "name": "search-stats-service",
+  "name": "stats-service",
   "version": "1.0.0",
-  "description": "Search and Stats using Prisma",
+  "description": "Stats using Prisma",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",

@@ -10,6 +10,7 @@ data:
   SALARY_URL: "http://salary-service.app.svc.cluster.local:3002"
   VOTE_URL: "http://vote-service.app.svc.cluster.local:3003"
   SEARCH_URL: "http://search-service.app.svc.cluster.local:3004"
+  STATS_URL: "http://stats-service.app.svc.cluster.local:3005"
   SALARY_SERVICE_URL: "http://salary-service.app.svc.cluster.local:3002"
   NEXT_PUBLIC_BFF_URL: "/api/proxy"
 ---

@@ -32,6 +32,20 @@ app.post('/api/votes', async (req, res) => {
   if (!['UP', 'DOWN'].includes(vote_type)) return res.status(400).json({ error: 'Invalid vote type' });
 
   try {
+    // Check if user is the creator
+    const submissionRes = await axios.get(`${SALARY_SERVICE_URL}/internal/submissions/${submission_id}`);
+    if (submissionRes.data.userId === parseInt(userId)) {
+      return res.status(403).json({ error: 'Cannot vote on your own submission' });
+    }
+  } catch (err) {
+    if (err.response && err.response.status === 404) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+    console.error('Error fetching submission:', err.message);
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
+
+  try {
     // Insert or update vote
     await prisma.vote.upsert({
       where: {

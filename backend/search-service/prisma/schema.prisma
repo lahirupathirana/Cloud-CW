@@ -14,6 +14,7 @@ model Submission {
   yearsOfExperience Int      @map("years_of_experience")
   baseSalary        Float    @map("base_salary")
   status            String   @default("PENDING")
+  userId            Int?     @map("user_id")
   createdAt         DateTime @default(now()) @map("created_at")
 
   @@map("submissions")

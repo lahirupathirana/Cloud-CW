@@ -26,6 +26,7 @@ const IDENTITY_URL = process.env.IDENTITY_URL || 'http://identity-service:3001';
 const SALARY_URL = process.env.SALARY_URL || 'http://salary-service:3002';
 const VOTE_URL = process.env.VOTE_URL || 'http://vote-service:3003';
 const SEARCH_URL = process.env.SEARCH_URL || 'http://search-service:3004';
+const STATS_URL = process.env.STATS_URL || 'http://stats-service:3005';
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwt';
 
 // Strictly verify JWT for protected routes (Like VOTE)
@@ -48,7 +49,7 @@ const authenticateJWT = (req, res, next) => {
 app.use('/api/proxy/auth', createProxyMiddleware({ target: IDENTITY_URL, changeOrigin: true, pathRewrite: {'^/api/proxy/auth': '/auth'} }));
 app.use('/api/proxy/submissions', createProxyMiddleware({ target: SALARY_URL, changeOrigin: true, pathRewrite: {'^/api/proxy/submissions': '/api/submissions'} }));
 app.use('/api/proxy/search', createProxyMiddleware({ target: SEARCH_URL, changeOrigin: true, pathRewrite: {'^/api/proxy/search': '/api/search'} }));
-app.use('/api/proxy/stats', createProxyMiddleware({ target: SEARCH_URL, changeOrigin: true, pathRewrite: {'^/api/proxy/stats': '/api/stats'} }));
+app.use('/api/proxy/stats', createProxyMiddleware({ target: STATS_URL, changeOrigin: true, pathRewrite: {'^/api/proxy/stats': '/api/stats'} }));
 
 // Protected endpoint - ONLY logged in users can VOTE
 app.use('/api/proxy/votes', authenticateJWT, createProxyMiddleware({

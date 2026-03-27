@@ -46,30 +46,8 @@ app.get('/api/search', async (req, res) => {
   }
 });
 
-app.get('/api/stats', async (req, res) => {
-  try {
-    const aggregate = await prisma.submission.groupBy({
-      by: ['jobTitle'],
-      where: { status: 'APPROVED' },
-      _avg: { baseSalary: true, yearsOfExperience: true },
-      _count: { id: true }
-    });
-
-    const results = aggregate.map(stat => ({
-      job_title: stat.jobTitle,
-      average_salary: stat._avg.baseSalary,
-      average_experience: stat._avg.yearsOfExperience,
-      total_submissions: stat._count.id
-    }));
-
-    res.json(results);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
 
 const PORT = process.env.PORT || 3004;
 app.listen(PORT, () => {
-  console.log(`Search & Stats Service running on port ${PORT}`);
+  console.log(`Search Service running on port ${PORT}`);
 });
