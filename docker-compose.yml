@@ -71,13 +71,28 @@ services:
 
   search-service:
     build:
-      context: ./backend/search-stats-service
+      context: ./backend/search-service
     container_name: ts-search
     environment:
       - PORT=3004
       - DATABASE_URL=postgresql://admin:password@postgres:5432/techsalary?schema=salary
     ports:
       - "3004:3004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ts-network
+
+  stats-service:
+    build:
+      context: ./backend/stats-service
+    container_name: ts-stats
+    environment:
+      - PORT=3005
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/techsalary?schema=salary
+    ports:
+      - "3005:3005"
     depends_on:
       postgres:
         condition: service_healthy
@@ -94,6 +109,7 @@ services:
       - SALARY_URL=http://salary-service:3002
       - VOTE_URL=http://vote-service:3003
       - SEARCH_URL=http://search-service:3004
+      - STATS_URL=http://stats-service:3005
       - JWT_SECRET=supersecretjwt
     ports:
       - "3050:3000"
@@ -102,6 +118,7 @@ services:
       - salary-service
       - vote-service
       - search-service
+      - stats-service
     networks:
       - ts-network
 
