@@ -1,12 +1,10 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["multiSchema"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  schemas  = ["salary"]
 }
 
 model Submission {
@@ -19,5 +17,4 @@ model Submission {
   createdAt         DateTime @default(now()) @map("created_at")
 
   @@map("submissions")
-  @@schema("salary")
 }

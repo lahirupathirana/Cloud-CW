@@ -1,12 +1,10 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["multiSchema"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  schemas  = ["salary"]
 }
 
 model Submission {
@@ -15,9 +13,8 @@ model Submission {
   companyName       String?  @map("company_name")
   yearsOfExperience Int      @map("years_of_experience")
   baseSalary        Float    @map("base_salary")
-  status            String   @default("PENDING") // PENDING vs APPROVED
+  status            String   @default("PENDING")
   createdAt         DateTime @default(now()) @map("created_at")
 
   @@map("submissions")
-  @@schema("salary")
 }

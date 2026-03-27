@@ -12,4 +12,5 @@ COPY . .
 
 EXPOSE 3004
 
-CMD ["sh", "-c", "npx prisma db push --skip-generate && npm start"]
+# Remove 'db push' to prevent race condition table locks with salary-service on the 'salary' schema!
+CMD ["npm", "start"]
